@@ -1,0 +1,152 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ page session="false" %>
+
+<!doctype html>
+
+<head>
+	<script src="https://threejs.org/examples/jsm/controls/OrbitControls.js"></script>
+	<script src="https://threejs.org/build/three.min.js" ></script>
+	<script src="https://threejs.org/examples/jsm/controls/OrbitControls.js" ></script>
+	<script src="https://threejs.org/examples/jsm/loaders/GLTFLoader.js" ></script>
+	
+	<style type="text/css">
+
+	    #canvas {
+	    width: 600px;
+		height: 600px;
+		background: white;
+		}
+  </style>
+</head>
+<body>
+
+<div id="canvas"></div>
+
+<select id="colorOption" onchange="setAnotherTexture()">
+  <option value="blue">blue</option>
+  <option value="red">red</option>
+  <option value="green">green</option>
+  <option value="black">black</option>
+</select>
+
+<script type='text/javascript'>
+// Set up the scene, camera, and renderer as global variables.
+var scene, camera, renderer, modelObj;
+
+init();
+animate();
+
+// Sets up the scene.
+function init() {
+
+	// Create the [SCENE] and set the scene size.
+	scene = new THREE.Scene();
+	scene.background = new THREE.Color( 0xffffff );
+	//Create a [RENDERER] and add it to the DOM.
+	renderer = new THREE.WebGLRenderer({antialias:true});
+	//renderer.gammaFactor = 2.2;
+	
+	var container = document.getElementById('canvas');
+    var WIDTH = container.offsetWidth;
+    var HEIGHT = container.offsetHeight;
+    
+	renderer.setSize(WIDTH, HEIGHT);
+	container.appendChild(renderer.domElement);
+	
+	
+	// Create a [CAMERA], zoom it out from the model a bit, and add it to the scene.
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 20000);
+    camera.position.set(0,6,0);
+    scene.add(camera);
+    
+    
+    // Update the Viewport on Resize
+	// Create an event listener that resizes the renderer with the browser window.
+	window.addEventListener('resize', function() {
+		var WIDTH = container.offsetWidth,
+		    HEIGHT = container.offsetHeight;
+		
+		renderer.setSize(WIDTH, HEIGHT);
+		camera.aspect = WIDTH / HEIGHT;
+		camera.updateProjectionMatrix();
+    });
+	
+    
+	// Add Lighting
+	// Set the background color of the scene.
+    renderer.setClearColor(0xffffff, 1);
+    renderer.gammaOutput = true;
+    
+    // Create a light, set its position, and add it to the scene.
+    var light = new THREE.HemisphereLight( 0xbbbbff, 0x444422 );
+	//light.position.set( 0, 1, 0 );
+	scene.add( light );
+	
+    
+ 	// Instantiate a loader
+    var loader = new THREE.GLTFLoader().setPath( 'resources/models/gltf/Hermes_Berkin/' );
+	loader.setResourcePath( 'resources/models/gltf/Hermes_Berkin/' );
+ 	
+    loader.load( 'hermes.gltf', function ( gltf ) {
+		
+    	modelObj = gltf.scene;
+    	
+    	scene.add( modelObj );
+    	
+		console.log(modelObj);
+		
+    }, undefined, function ( error ) {
+
+    	console.error( error );
+
+    } );
+    
+    
+ 	
+    // Add Controls
+ 	// Add OrbitControls so that we can pan around with the mouse.
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    //container.addEventListener("touchstart", handlerFunction, false);
+
+}
+
+//Renders the scene and updates the render as needed.
+function animate() {
+
+	// Read more about requestAnimationFrame at http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+	requestAnimationFrame(animate);
+	
+	// Render the scene.
+	renderer.render(scene, camera);
+	controls.update();
+
+}
+
+function setAnotherTexture() {
+	var textureColor = document.getElementById("colorOption").value;
+	var textureLoader = new THREE.TextureLoader();
+	
+	var newTexture = textureLoader.load( "resources/models/gltf/Hermes_Berkin/hermes_birkin_" + textureColor + "_d.jpg");
+	
+	newTexture.encoding = THREE.sRGBEncoding;
+	newTexture.flipY = false;
+
+ 	modelObj.traverse( function ( child ) {
+		
+		if (child instanceof THREE.Mesh) {
+		    //create a global var to reference later when changing textures
+		    //apply texture
+
+	    	child.material.map = newTexture;
+	    	child.material.needsUpdate = true;
+	    	child.material.map.needsUpdate = true;
+
+		}
+	});
+	console.log(modelObj);
+
+}
+</script>
+
+</body>
